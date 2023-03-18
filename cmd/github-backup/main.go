@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/pflag"
 
@@ -33,7 +35,12 @@ func main() {
 	logging.Setup(svcConfig.Verbose, svcConfig.Console)
 
 	// Run backup
-	if err = backup.Backup(svcConfig); err != nil {
-		log.Fatal().Err(err).Msg("Backup of GitHub failed")
+	log.Info().Msg("Starting backup ...")
+	start := time.Now()
+	err = backup.Backup(svcConfig)
+	logger := log.With().Dur("duration_sec", time.Since(start)).Logger()
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Backup failed")
 	}
+	logger.Info().Msg("Backup finished")
 }

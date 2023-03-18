@@ -18,4 +18,5 @@ func Setup(verbose, console bool) {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 		log.Debug().Msg("Verbose logging enabled")
 	}
+	zerolog.DurationFieldUnit = time.Second
 }
