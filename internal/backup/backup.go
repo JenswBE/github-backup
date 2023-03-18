@@ -58,15 +58,15 @@ func Backup(svcConfig *config.Config) error {
 			return fmt.Errorf("failed to get authenticated URL: %w", err)
 		}
 		repoDir := filepath.Join(svcConfig.MirrorPath, repoName)
-		if _, err = os.Stat(repoDir); err != nil {
-			if os.IsNotExist(err) {
-				// Repo dir not found => Mirror new repo
-				log.Debug().Str("repo_dir", repoDir).Str("clone_url", cloneURL).Msg("Repo dir not found, initializing a new local folder ...")
-				if err = git.Init(authURL, repoDir); err != nil {
-					return fmt.Errorf("failed to init new local repo: %w", err)
-				}
-			} else {
-				return fmt.Errorf("failed to check if directory for repo %s already exists: %w", repoName, err)
+		repoDirExists, err := pathExists(repoDir)
+		if err != nil {
+			return fmt.Errorf("failed to check if directory for repo %s already exists: %w", repoName, err)
+		}
+		if repoDirExists {
+			// Repo dir not found => Mirror new repo
+			log.Debug().Str("repo_dir", repoDir).Str("clone_url", cloneURL).Msg("Repo dir not found, initializing a new local folder ...")
+			if err = git.Init(authURL, repoDir); err != nil {
+				return fmt.Errorf("failed to init new local repo: %w", err)
 			}
 		} else {
 			// Repo dir exists => Update
@@ -135,4 +135,15 @@ func listFolders(path string) ([]string, error) {
 	}
 	foldersList := lo.FilterMap(folders, func(f fs.DirEntry, _ int) (string, bool) { return f.Name(), f.IsDir() })
 	return foldersList, nil
+}
+
+func pathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check if path %s exists: %w", path, err)
+	}
+	return true, nil
 }
