@@ -1,0 +1,6 @@
+Username: MyUsername
+PersonalAccessToken: github_pat_...
+Verbose: true
+Console: true
+MirrorPath: "mirror"
+RemoveRedundantFolders: true
