@@ -25,6 +25,7 @@ COPY . .
 RUN CGO_ENABLED=0 go build -ldflags='-extldflags=-static' -o /bin/github-backup ./cmd/github-backup
 
 FROM alpine
+RUN apk add --no-cache git
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /bin/github-backup /github-backup
 ENTRYPOINT ["./github-backup"]
