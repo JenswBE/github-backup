@@ -1,5 +1,5 @@
 /configs/config.yml
-/mirror
+/backup
 
 # Binaries for programs and plugins
 *.exe

@@ -17,17 +17,19 @@ type Config struct {
 	Verbose bool
 	// Enable console logging
 	Console bool
-	// Path to store the mirrors
-	MirrorPath string
-	// Maximum number of folders we should delete before considering an error
-	MaxFoldersToDelete uint
+	// Path to store the backups to
+	BackupPath string
+	// Maximum number of folders we should delete before considering an error.
+	// Set to 0 for returning an error on any deletion.
+	// Set to negative value to disable this check.
+	MaxFoldersToDelete int
 	// Removes folders for which no matching repo was found
 	RemoveRedundantFolders bool
 }
 
 func ParseConfig() (*Config, error) {
 	// Set defaults
-	viper.SetDefault("MirrorPath", ".")
+	viper.SetDefault("BackupPath", "backup")
 	viper.SetDefault("MaxFoldersToDelete", 3)
 
 	// Parse config file
@@ -51,7 +53,8 @@ func ParseConfig() (*Config, error) {
 		{"PersonalAccessToken", "GHB_PERSONAL_ACCESS_TOKEN"},
 		{"Verbose", "GHB_VERBOSE"},
 		{"Console", "GHB_CONSOLE"},
-		{"MirrorPath", "GHB_MIRROR_PATH"},
+		{"BackkupPath", "GHB_BACKUP_PATH"},
+		{"RemoveRedundantFolders", "GHB_REMOVE_REDUNDANT_FOLDERS"},
 		{"MaxFoldersToDelete", "GHB_MAX_FOLDERS_TO_DELETE"},
 	})
 	if err != nil {

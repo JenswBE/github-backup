@@ -18,11 +18,15 @@ func main() {
 
 	// Parse flags
 	verbose := pflag.BoolP("verbose", "v", false, "Enable verbose output")
+	ignoreMaxFoldersToDelete := pflag.Bool("ignore-max-folders-to-delete", false, "Ignores MaxFoldersToDelete")
 	pflag.Parse()
 
 	// Apply flags on config
 	if !svcConfig.Verbose {
 		svcConfig.Verbose = *verbose
+	}
+	if *ignoreMaxFoldersToDelete {
+		svcConfig.MaxFoldersToDelete = -1
 	}
 
 	// Setup logging

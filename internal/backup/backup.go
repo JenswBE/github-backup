@@ -24,22 +24,22 @@ func Backup(svcConfig *config.Config) error {
 		return fmt.Errorf("failed to list GitHub repos: %w", err)
 	}
 
-	// Ensure mirror path exists
-	log.Debug().Str("mirror_path", svcConfig.MirrorPath).Msg("Ensuring mirror path exists ...")
-	if err = os.MkdirAll(svcConfig.MirrorPath, 0o700); err != nil {
-		return fmt.Errorf("failed to ensure mirror path %s exists: %w", svcConfig.MirrorPath, err)
+	// Ensure backup path exists
+	log.Debug().Str("backup_path", svcConfig.BackupPath).Msg("Ensuring backup path exists ...")
+	if err = os.MkdirAll(svcConfig.BackupPath, 0o700); err != nil {
+		return fmt.Errorf("failed to ensure backup path %s exists: %w", svcConfig.BackupPath, err)
 	}
 
-	// List mirrored folders
-	log.Debug().Str("mirror_path", svcConfig.MirrorPath).Msg("Listing local folders in mirror path ...")
-	localFolders, err := listFolders(svcConfig.MirrorPath)
+	// List folders in backup path
+	log.Debug().Str("backup_path", svcConfig.BackupPath).Msg("Listing local folders in backup path ...")
+	localFolders, err := listFolders(svcConfig.BackupPath)
 	if err != nil {
-		return fmt.Errorf("failed to list local folders before syncing in mirror path %s: %w", svcConfig.MirrorPath, err)
+		return fmt.Errorf("failed to list folders in backup path %s before syncing: %w", svcConfig.BackupPath, err)
 	}
 	log.Debug().Strs("local_folders", localFolders).Msg("Discovered local folders")
 	localFoldersToDelete := lo.SliceToMap(localFolders, func(f string) (string, bool) { return f, true })
 
-	// Mirror all repo's
+	// Backup all repo's
 	for i, r := range repos {
 		// Check input
 		if r == nil {
@@ -49,21 +49,21 @@ func Backup(svcConfig *config.Config) error {
 			return fmt.Errorf("repo received without name on index %d", i)
 		}
 
-		// Mirror repo
+		// Backup repo
 		repoName := r.GetName()
 		cloneURL := r.GetCloneURL()
-		log.Debug().Str("repo", r.GetName()).Str("clone_url", cloneURL).Msg("Mirroring repo ...")
+		log.Debug().Str("repo", r.GetName()).Str("clone_url", cloneURL).Msg("Backup repo ...")
 		authURL, err := git.GetAuthenticatedURL(cloneURL, svcConfig.Username, svcConfig.PersonalAccessToken)
 		if err != nil {
 			return fmt.Errorf("failed to get authenticated URL: %w", err)
 		}
-		repoDir := filepath.Join(svcConfig.MirrorPath, repoName)
+		repoDir := filepath.Join(svcConfig.BackupPath, repoName)
 		repoDirExists, err := pathExists(repoDir)
 		if err != nil {
 			return fmt.Errorf("failed to check if directory for repo %s already exists: %w", repoName, err)
 		}
-		if repoDirExists {
-			// Repo dir not found => Mirror new repo
+		if !repoDirExists {
+			// Repo dir not found => Init new repo
 			log.Debug().Str("repo_dir", repoDir).Str("clone_url", cloneURL).Msg("Repo dir not found, initializing a new local folder ...")
 			if err = git.Init(authURL, repoDir); err != nil {
 				return fmt.Errorf("failed to init new local repo: %w", err)
@@ -88,17 +88,17 @@ func Backup(svcConfig *config.Config) error {
 	// Delete redundant folders
 	if len(localFoldersToDelete) > 0 {
 		log.Debug().Func(func(e *zerolog.Event) { e.Strs("local_folders", lo.Keys(localFoldersToDelete)) }).Msg("Removing redundant folders ...")
-		if len(localFoldersToDelete) > int(svcConfig.MaxFoldersToDelete) {
+		if svcConfig.MaxFoldersToDelete >= 0 && len(localFoldersToDelete) > svcConfig.MaxFoldersToDelete {
 			localFoldersToDeleteList := lo.Keys(localFoldersToDelete)
 			log.Error().
 				Int("folder_count", len(localFoldersToDeleteList)).
-				Uint("max_count", svcConfig.MaxFoldersToDelete).
+				Int("max_count", svcConfig.MaxFoldersToDelete).
 				Strs("folders", localFoldersToDeleteList).
 				Msg("Too many folders found to remove")
-			return fmt.Errorf("%d redundant folders found, but max is %d", len(localFoldersToDeleteList), svcConfig.MaxFoldersToDelete)
+			return fmt.Errorf("%d redundant folder(s) found, but max is %d", len(localFoldersToDeleteList), svcConfig.MaxFoldersToDelete)
 		}
 		for f := range localFoldersToDelete {
-			rmPath := filepath.Join(svcConfig.MirrorPath, f)
+			rmPath := filepath.Join(svcConfig.BackupPath, f)
 			log.Debug().Str("folder", rmPath).Msg("Removing redundant folder ...")
 			if err = os.RemoveAll(rmPath); err != nil {
 				return fmt.Errorf("failed to remove redundant folder %s: %w", rmPath, err)
@@ -107,9 +107,9 @@ func Backup(svcConfig *config.Config) error {
 	}
 
 	// Validate remaining folder count matches repo count
-	folders, err := listFolders(svcConfig.MirrorPath)
+	folders, err := listFolders(svcConfig.BackupPath)
 	if err != nil {
-		return fmt.Errorf("failed to list local folders after syncing in mirror path %s: %w", svcConfig.MirrorPath, err)
+		return fmt.Errorf("failed to list folders in backup path %s after syncing: %w", svcConfig.BackupPath, err)
 	}
 	if len(folders) != len(repos) {
 		repoNames := github.ExtractRepoNames(repos)
