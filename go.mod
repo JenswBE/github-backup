@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/google/go-github/v50 v50.2.0
 	github.com/rs/zerolog v1.29.0
-	github.com/samber/lo v1.37.0
+	github.com/samber/lo v1.38.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
 	golang.org/x/oauth2 v0.6.0
