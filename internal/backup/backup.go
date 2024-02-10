@@ -2,6 +2,7 @@ package backup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -120,7 +121,7 @@ func Backup(svcConfig *config.Config) error {
 			Strs("missing_folders", missingFolders).
 			Strs("redundant_folders", redundantFolders).
 			Msg("Mismatch in local folders and remote repositories")
-		return fmt.Errorf("mismatch in local folders and remote repositories")
+		return errors.New("mismatch in local folders and remote repositories")
 	}
 
 	return nil
