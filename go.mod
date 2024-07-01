@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/google/go-github/v50 v50.2.0
 	github.com/rs/zerolog v1.33.0
-	github.com/samber/lo v1.39.0
+	github.com/samber/lo v1.44.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	golang.org/x/oauth2 v0.21.0
@@ -33,7 +33,7 @@ require (
 	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/sys v0.18.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
