@@ -1,7 +1,6 @@
 module github.com/JenswBE/github-backup
 
 go 1.22.0
-
 toolchain go1.23.2
 
 require (
@@ -10,7 +9,7 @@ require (
 	github.com/samber/lo v1.49.1
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.19.0
-	golang.org/x/oauth2 v0.26.0
+	golang.org/x/oauth2 v0.27.0
 )
 
 require (
