@@ -6,6 +6,7 @@ on:
       - "v*.*.*"
 
 env:
+  GO_VERSION: "1.24"
   DOCKER_HUB_REPO: jenswbe/github-backup
   DOCKER_HUB_USER: jenswbebot
   PLATFORMS: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
@@ -43,7 +44,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: ${{ env.GO_VERSION }}
           check-latest: true
 
       - name: Pull common linter configs
