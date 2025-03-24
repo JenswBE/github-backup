@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/google/go-github/v50 v50.2.0
-	github.com/rs/zerolog v1.33.0
+	github.com/rs/zerolog v1.34.0
 	github.com/samber/lo v1.49.1
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.20.0
