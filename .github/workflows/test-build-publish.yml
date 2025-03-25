@@ -51,12 +51,11 @@ jobs:
         run: wget -O .golangci.yml https://raw.githubusercontent.com/JenswBE/setup/main/programming_configs/golang/.golangci.yml
 
       - name: Lint service
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
           version: latest
           args: >-
-            --timeout=5m
-            --disable goerr113
+            --disable err113
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
