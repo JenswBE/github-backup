@@ -6,7 +6,7 @@ on:
       - "v*.*.*"
 
 env:
-  GO_VERSION: "1.24"
+  GO_VERSION: "1.26"
   DOCKER_HUB_REPO: jenswbe/github-backup
   DOCKER_HUB_USER: jenswbebot
   PLATFORMS: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
