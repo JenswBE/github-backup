@@ -3,8 +3,8 @@ package config
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -44,7 +44,7 @@ func ParseConfig() (*Config, error) {
 		if !errors.As(err, &configNotFoundErr) {
 			return nil, fmt.Errorf("failed reading config file: %w", configNotFoundErr)
 		}
-		log.Warn().Err(err).Msg("No config file found, expecting configuration through ENV variables")
+		slog.Warn("No config file found, expecting configuration through ENV variables", "error", err)
 	}
 
 	// Bind ENV variables

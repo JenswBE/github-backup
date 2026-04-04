@@ -2,10 +2,9 @@ package git
 
 import (
 	"fmt"
+	"log/slog"
 	"os/exec"
 	"path/filepath"
-
-	"github.com/rs/zerolog/log"
 )
 
 // Init creates a new mirrored repository in provided local path
@@ -13,12 +12,12 @@ func Init(repoURL AuthenticatedURL, localPath string) error {
 	localPath = filepath.Clean(localPath)
 	cmd := exec.Command("git", "clone", "--mirror", repoURL.String(), localPath) //#nosec G204
 	output, err := cmd.CombinedOutput()
-	logger := log.With().Bytes("output", output).Stringer("command", cmd).Str("path", localPath).Logger()
+	logger := slog.With("output", string(output), "command", cmd.String(), "path", localPath)
 	if err != nil {
-		logger.Error().Msg("Failed to init new mirrored repository")
+		logger.Error("Failed to init new mirrored repository")
 		return fmt.Errorf("failed to update remote URL of local mirror: %w", err)
 	}
-	logger.Debug().Msg("Successfully initialized a new mirrored repository")
+	logger.Debug("Successfully initialized a new mirrored repository")
 	return nil
 }
 
@@ -29,22 +28,22 @@ func Update(repoURL AuthenticatedURL, localPath string) error {
 	cmd := exec.Command("git", "remote", "set-url", "origin", repoURL.String()) //#nosec G204
 	cmd.Dir = localPath
 	output, err := cmd.CombinedOutput()
-	logger := log.With().Bytes("output", output).Stringer("command", cmd).Str("path", localPath).Logger()
+	logger := slog.With("output", string(output), "command", cmd.String(), "path", localPath)
 	if err != nil {
-		logger.Error().Msg("Failed to remote URL of repo")
+		logger.Error("Failed to remote URL of repo")
 		return fmt.Errorf("failed to update remote URL of local mirror: %w", err)
 	}
-	logger.Debug().Msg("Successfully updated remote URL of repo")
+	logger.Debug("Successfully updated remote URL of repo")
 
 	// Update mirrored repo
 	cmd = exec.Command("git", "remote", "update", "--prune")
 	cmd.Dir = localPath
 	output, err = cmd.CombinedOutput()
-	logger = log.With().Bytes("output", output).Stringer("command", cmd).Str("path", localPath).Logger()
+	logger = slog.With("output", string(output), "command", cmd.String(), "path", localPath)
 	if err != nil {
-		logger.Error().Msg("Failed to update local mirror")
+		logger.Error("Failed to update local mirror")
 		return fmt.Errorf("failed to update local mirror: %w", err)
 	}
-	logger.Debug().Msg("Successfully updated local mirror")
+	logger.Debug("Successfully updated local mirror")
 	return nil
 }
