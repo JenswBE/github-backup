@@ -1,9 +1,10 @@
 package main
 
 import (
+	"log/slog"
+	"os"
 	"time"
 
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/pflag"
 
 	"github.com/JenswBE/github-backup/internal/backup"
@@ -11,11 +12,16 @@ import (
 	"github.com/JenswBE/github-backup/internal/logging"
 )
 
+func slogFatal(msg string, args ...any) {
+	slog.Error(msg, args...)
+	os.Exit(1)
+}
+
 func main() {
 	// Parse config
 	svcConfig, err := config.ParseConfig()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to parse config")
+		slogFatal("Failed to parse config", "error", err)
 	}
 
 	// Parse flags
@@ -35,12 +41,11 @@ func main() {
 	logging.Setup(svcConfig.Verbose, svcConfig.Console)
 
 	// Run backup
-	log.Info().Msg("Starting backup ...")
+	slog.Info("Starting backup ...")
 	start := time.Now()
 	err = backup.Backup(svcConfig)
-	logger := log.With().Dur("duration_sec", time.Since(start)).Logger()
 	if err != nil {
-		logger.Fatal().Err(err).Msg("Backup failed")
+		slogFatal("Backup failed", "error", err, "duration_sec", time.Since(start).Seconds())
 	}
-	logger.Info().Msg("Backup finished")
+	slog.Info("Backup finished", "duration_sec", time.Since(start).Seconds())
 }

@@ -5,11 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
 
 	"github.com/JenswBE/github-backup/internal/config"
@@ -26,18 +25,18 @@ func Backup(svcConfig *config.Config) error {
 	}
 
 	// Ensure backup path exists
-	log.Debug().Str("backup_path", svcConfig.BackupPath).Msg("Ensuring backup path exists ...")
+	slog.Debug("Ensuring backup path exists ...", "backup_path", svcConfig.BackupPath)
 	if err = os.MkdirAll(svcConfig.BackupPath, 0o700); err != nil {
 		return fmt.Errorf("failed to ensure backup path %s exists: %w", svcConfig.BackupPath, err)
 	}
 
 	// List folders in backup path
-	log.Debug().Str("backup_path", svcConfig.BackupPath).Msg("Listing local folders in backup path ...")
+	slog.Debug("Listing local folders in backup path ...", "backup_path", svcConfig.BackupPath)
 	localFolders, err := listFolders(svcConfig.BackupPath)
 	if err != nil {
 		return fmt.Errorf("failed to list folders in backup path %s before syncing: %w", svcConfig.BackupPath, err)
 	}
-	log.Debug().Strs("local_folders", localFolders).Msg("Discovered local folders")
+	slog.Debug("Discovered local folders", "local_folders", localFolders)
 	localFoldersToDelete := lo.SliceToMap(localFolders, func(f string) (string, bool) { return f, true })
 
 	// Backup all repo's
@@ -53,7 +52,7 @@ func Backup(svcConfig *config.Config) error {
 		// Backup repo
 		repoName := r.GetName()
 		cloneURL := r.GetCloneURL()
-		log.Debug().Str("repo", r.GetName()).Str("clone_url", cloneURL).Msg("Backup repo ...")
+		slog.Debug("Backup repo ...", "repo", r.GetName(), "clone_url", cloneURL)
 		authURL, err := git.GetAuthenticatedURL(cloneURL, svcConfig.Username, svcConfig.PersonalAccessToken)
 		if err != nil {
 			return fmt.Errorf("failed to get authenticated URL: %w", err)
@@ -65,13 +64,13 @@ func Backup(svcConfig *config.Config) error {
 		}
 		if !repoDirExists {
 			// Repo dir not found => Init new repo
-			log.Debug().Str("repo_dir", repoDir).Str("clone_url", cloneURL).Msg("Repo dir not found, initializing a new local folder ...")
+			slog.Debug("Repo dir not found, initializing a new local folder ...", "repo_dir", repoDir, "clone_url", cloneURL)
 			if err = git.Init(authURL, repoDir); err != nil {
 				return fmt.Errorf("failed to init new local repo: %w", err)
 			}
 		} else {
 			// Repo dir exists => Update
-			log.Debug().Str("repo_dir", repoDir).Str("clone_url", cloneURL).Msg("Repo dir found, updating existing folder ...")
+			slog.Debug("Repo dir found, updating existing folder ...", "repo_dir", repoDir, "clone_url", cloneURL)
 			if err = git.Update(authURL, repoDir); err != nil {
 				return fmt.Errorf("failed to update local repo: %w", err)
 			}
@@ -88,19 +87,19 @@ func Backup(svcConfig *config.Config) error {
 
 	// Delete redundant folders
 	if len(localFoldersToDelete) > 0 {
-		log.Debug().Func(func(e *zerolog.Event) { e.Strs("local_folders", lo.Keys(localFoldersToDelete)) }).Msg("Removing redundant folders ...")
+		slog.Debug("Removing redundant folders ...", "local_folders", lo.Keys(localFoldersToDelete))
 		if svcConfig.MaxFoldersToDelete >= 0 && len(localFoldersToDelete) > svcConfig.MaxFoldersToDelete {
 			localFoldersToDeleteList := lo.Keys(localFoldersToDelete)
-			log.Error().
-				Int("folder_count", len(localFoldersToDeleteList)).
-				Int("max_count", svcConfig.MaxFoldersToDelete).
-				Strs("folders", localFoldersToDeleteList).
-				Msg("Too many folders found to remove")
+			slog.Error("Too many folders found to remove",
+				"folder_count", len(localFoldersToDeleteList),
+				"max_count", svcConfig.MaxFoldersToDelete,
+				"folders", localFoldersToDeleteList,
+			)
 			return fmt.Errorf("%d redundant folder(s) found, but max is %d", len(localFoldersToDeleteList), svcConfig.MaxFoldersToDelete)
 		}
 		for f := range localFoldersToDelete {
 			rmPath := filepath.Join(svcConfig.BackupPath, f)
-			log.Debug().Str("folder", rmPath).Msg("Removing redundant folder ...")
+			slog.Debug("Removing redundant folder ...", "folder", rmPath)
 			if err = os.RemoveAll(rmPath); err != nil {
 				return fmt.Errorf("failed to remove redundant folder %s: %w", rmPath, err)
 			}
@@ -115,12 +114,12 @@ func Backup(svcConfig *config.Config) error {
 	if len(folders) != len(repos) {
 		repoNames := github.ExtractRepoNames(repos)
 		redundantFolders, missingFolders := lo.Difference(folders, repoNames)
-		log.Error().
-			Int("folder_count", len(folders)).
-			Int("repo_count", len(repos)).
-			Strs("missing_folders", missingFolders).
-			Strs("redundant_folders", redundantFolders).
-			Msg("Mismatch in local folders and remote repositories")
+		slog.Error("Mismatch in local folders and remote repositories",
+			"folder_count", len(folders),
+			"repo_count", len(repos),
+			"missing_folders", missingFolders,
+			"redundant_folders", redundantFolders,
+		)
 		return errors.New("mismatch in local folders and remote repositories")
 	}
 
