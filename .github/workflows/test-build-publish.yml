@@ -38,7 +38,7 @@ jobs:
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
             output.write(f"tags={tags_list}{os.linesep}")
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: "1.26"
           check-latest: true
